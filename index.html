@@ -1,21 +1,45 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Painel de Serviços</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
+  <header class="topo">
+    <div>
+      <h1>Painel de Serviços</h1>
+      <p>Controle simples de projetos, status e responsáveis.</p>
+    </div>
+    <span class="badge">Sistema Online</span>
+  </header>
+
   <main class="container">
-    <h1>Painel de Serviços</h1>
-    <p>Sistema simples para controle de projetos e serviços.</p>
+
+    <section class="resumos">
+      <div class="resumo">
+        <h3>Total</h3>
+        <strong id="totalProjetos">0</strong>
+      </div>
+      <div class="resumo">
+        <h3>Em andamento</h3>
+        <strong id="totalAndamento">0</strong>
+      </div>
+      <div class="resumo">
+        <h3>Finalizados</h3>
+        <strong id="totalFinalizados">0</strong>
+      </div>
+    </section>
 
     <section class="card">
       <h2>Novo Projeto</h2>
 
-      <input id="titulo" type="text" placeholder="Nome do projeto">
+      <input id="titulo" type="text" placeholder="Nome do projeto" />
       <textarea id="descricao" placeholder="Descrição do projeto"></textarea>
+      <input id="responsavel" type="text" placeholder="Responsável" />
+      <input id="data" type="date" />
 
       <select id="status">
         <option value="Não iniciado">Não iniciado</option>
@@ -27,10 +51,24 @@
     </section>
 
     <section class="card">
-      <h2>Projetos</h2>
+      <div class="linha">
+        <h2>Projetos</h2>
+        <div class="filtros">
+          <input id="pesquisa" type="text" placeholder="Pesquisar..." oninput="listarProjetos()" />
+          <select id="filtroStatus" onchange="listarProjetos()">
+            <option value="Todos">Todos</option>
+            <option value="Não iniciado">Não iniciado</option>
+            <option value="Em andamento">Em andamento</option>
+            <option value="Finalizado">Finalizado</option>
+          </select>
+        </div>
+      </div>
+
       <div id="listaProjetos"></div>
     </section>
+
   </main>
 
   <script src="script.js"></script>
 </body>
+</html>
