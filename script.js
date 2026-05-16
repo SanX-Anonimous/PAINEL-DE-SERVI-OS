@@ -1,10 +1,28 @@
-let projetos = JSON.parse(localStorage.getItem("projetos")) || [];
+let projetos = [];
 
-function salvarProjetos() {
-  localStorage.setItem("projetos", JSON.stringify(projetos));
+function iniciarFirestore() {
+  if (!window.db) {
+    setTimeout(iniciarFirestore, 300);
+    return;
+  }
+
+  const projetosRef = window.collection(window.db, "projetos");
+
+  window.onSnapshot(projetosRef, (snapshot) => {
+    projetos = [];
+
+    snapshot.forEach((docItem) => {
+      projetos.push({
+        id: docItem.id,
+        ...docItem.data()
+      });
+    });
+
+    listarProjetos();
+  });
 }
 
-function adicionarProjeto() {
+async function adicionarProjeto() {
   const titulo = document.getElementById("titulo").value.trim();
   const descricao = document.getElementById("descricao").value.trim();
   const responsavel = document.getElementById("responsavel").value.trim();
@@ -16,18 +34,21 @@ function adicionarProjeto() {
     return;
   }
 
-  projetos.push({
-    id: Date.now(),
-    titulo,
-    descricao,
-    responsavel,
-    data,
-    status
-  });
+  try {
+    await window.addDoc(window.collection(window.db, "projetos"), {
+      titulo,
+      descricao,
+      responsavel,
+      data,
+      status,
+      criadoEm: window.serverTimestamp()
+    });
 
-  salvarProjetos();
-  limparFormulario();
-  listarProjetos();
+    limparFormulario();
+  } catch (erro) {
+    console.error("Erro ao adicionar projeto:", erro);
+    alert("Erro ao salvar projeto no Firebase.");
+  }
 }
 
 function limparFormulario() {
@@ -46,10 +67,14 @@ function listarProjetos() {
   lista.innerHTML = "";
 
   let filtrados = projetos.filter(projeto => {
+    const titulo = projeto.titulo || "";
+    const descricao = projeto.descricao || "";
+    const responsavel = projeto.responsavel || "";
+
     const combinaPesquisa =
-      projeto.titulo.toLowerCase().includes(pesquisa) ||
-      projeto.descricao.toLowerCase().includes(pesquisa) ||
-      projeto.responsavel.toLowerCase().includes(pesquisa);
+      titulo.toLowerCase().includes(pesquisa) ||
+      descricao.toLowerCase().includes(pesquisa) ||
+      responsavel.toLowerCase().includes(pesquisa);
 
     const combinaStatus =
       filtroStatus === "Todos" || projeto.status === filtroStatus;
@@ -83,11 +108,11 @@ function listarProjetos() {
         <p>Status: <span class="status ${classeStatus}">${projeto.status}</span></p>
 
         <div class="acoes">
-          <button onclick="alterarStatus(${projeto.id}, 'Não iniciado')">Não iniciado</button>
-          <button onclick="alterarStatus(${projeto.id}, 'Em andamento')">Em andamento</button>
-          <button class="finalizar" onclick="alterarStatus(${projeto.id}, 'Finalizado')">Finalizar</button>
-          <button class="editar" onclick="editarProjeto(${projeto.id})">Editar</button>
-          <button class="excluir" onclick="excluirProjeto(${projeto.id})">Excluir</button>
+          <button onclick="alterarStatus('${projeto.id}', 'Não iniciado')">Não iniciado</button>
+          <button onclick="alterarStatus('${projeto.id}', 'Em andamento')">Em andamento</button>
+          <button class="finalizar" onclick="alterarStatus('${projeto.id}', 'Finalizado')">Finalizar</button>
+          <button class="editar" onclick="editarProjeto('${projeto.id}')">Editar</button>
+          <button class="excluir" onclick="excluirProjeto('${projeto.id}')">Excluir</button>
         </div>
       </div>
     `;
@@ -102,45 +127,56 @@ function atualizarResumo() {
     projetos.filter(p => p.status === "Finalizado").length;
 }
 
-function alterarStatus(id, novoStatus) {
-  projetos = projetos.map(projeto => {
-    if (projeto.id === id) {
-      projeto.status = novoStatus;
-    }
-    return projeto;
-  });
+async function alterarStatus(id, novoStatus) {
+  try {
+    const projetoRef = window.doc(window.db, "projetos", id);
 
-  salvarProjetos();
-  listarProjetos();
+    await window.updateDoc(projetoRef, {
+      status: novoStatus
+    });
+  } catch (erro) {
+    console.error("Erro ao alterar status:", erro);
+    alert("Erro ao alterar status.");
+  }
 }
 
-function editarProjeto(id) {
+async function editarProjeto(id) {
   const projeto = projetos.find(p => p.id === id);
 
   const novoTitulo = prompt("Nome do projeto:", projeto.titulo);
   if (novoTitulo === null || novoTitulo.trim() === "") return;
 
-  const novaDescricao = prompt("Descrição:", projeto.descricao);
-  const novoResponsavel = prompt("Responsável:", projeto.responsavel);
-  const novaData = prompt("Data no formato AAAA-MM-DD:", projeto.data);
+  const novaDescricao = prompt("Descrição:", projeto.descricao || "");
+  const novoResponsavel = prompt("Responsável:", projeto.responsavel || "");
+  const novaData = prompt("Data no formato AAAA-MM-DD:", projeto.data || "");
 
-  projeto.titulo = novoTitulo.trim();
-  projeto.descricao = novaDescricao || "";
-  projeto.responsavel = novoResponsavel || "";
-  projeto.data = novaData || "";
+  try {
+    const projetoRef = window.doc(window.db, "projetos", id);
 
-  salvarProjetos();
-  listarProjetos();
+    await window.updateDoc(projetoRef, {
+      titulo: novoTitulo.trim(),
+      descricao: novaDescricao || "",
+      responsavel: novoResponsavel || "",
+      data: novaData || ""
+    });
+  } catch (erro) {
+    console.error("Erro ao editar projeto:", erro);
+    alert("Erro ao editar projeto.");
+  }
 }
 
-function excluirProjeto(id) {
+async function excluirProjeto(id) {
   const confirmar = confirm("Deseja realmente excluir este projeto?");
 
   if (!confirmar) return;
 
-  projetos = projetos.filter(projeto => projeto.id !== id);
-  salvarProjetos();
-  listarProjetos();
+  try {
+    const projetoRef = window.doc(window.db, "projetos", id);
+    await window.deleteDoc(projetoRef);
+  } catch (erro) {
+    console.error("Erro ao excluir projeto:", erro);
+    alert("Erro ao excluir projeto.");
+  }
 }
 
-listarProjetos();
+iniciarFirestore();
