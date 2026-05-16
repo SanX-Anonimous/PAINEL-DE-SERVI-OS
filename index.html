@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Painel de Serviços</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <main class="container">
+    <h1>Painel de Serviços</h1>
+    <p>Sistema simples para controle de projetos e serviços.</p>
+
+    <section class="card">
+      <h2>Novo Projeto</h2>
+
+      <input id="titulo" type="text" placeholder="Nome do projeto">
+      <textarea id="descricao" placeholder="Descrição do projeto"></textarea>
+
+      <select id="status">
+        <option value="Não iniciado">Não iniciado</option>
+        <option value="Em andamento">Em andamento</option>
+        <option value="Finalizado">Finalizado</option>
+      </select>
+
+      <button onclick="adicionarProjeto()">Adicionar Projeto</button>
+    </section>
+
+    <section class="card">
+      <h2>Projetos</h2>
+      <div id="listaProjetos"></div>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
